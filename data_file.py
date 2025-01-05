@@ -1,5 +1,3 @@
-from openai import OpenAI
-import openai
 import pathway as pw
 import numpy as np
 import os
@@ -15,6 +13,7 @@ def generate_embeddings(text, model=model):
 # Load files into Pathway Table
 def load_files_into_pathway(destination):
     rows = []
+    data=[]
     for file_name in os.listdir(destination):
         file_path = os.path.join(destination, file_name)
         with open(file_path, "rb") as f:
@@ -23,7 +22,14 @@ def load_files_into_pathway(destination):
             for page in reader.pages:
                 content+=page.extract_text()            
             rows.append({"file_name": file_name, "file_content": content})
-    return rows
+        nonpub=['R00'+str(i)+'.pdf' for i in range(1,6)]
+        pub=['R00'+str(i)+'.pdf' for i in range(6,16)]
+        if file_name in pub:
+            data.append({'content':content,'label':1}) 
+        if file_name in nonpub:
+            data.append({'content':content,'label':0}) 
+    print(len(data))  
+    return rows,data
 # Create Embeddings and Storeom sentence_transformers import SentenceTransformer
 
 # Load pre-trained Sentence Transformer model
@@ -55,7 +61,8 @@ def store_embeddings_in_index(file_table):
 downloaded_folder = "./downloaded_files"  
 
 # Load files into Pathway Table
-file_table = load_files_into_pathway(downloaded_folder)
+global data1
+file_table,data1 = load_files_into_pathway(downloaded_folder)
 # Generate embeddings and store them in the VectorStore
 global index
 index = store_embeddings_in_index(file_table)
